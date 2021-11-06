@@ -1,5 +1,6 @@
 const { encode, decode } = require('morsee')
 const { Server } = require('socket.io')
+const Parser = require('rss-parser')
 const express = require('express')
 const axios = require('axios')
 const http = require('http')
@@ -9,6 +10,7 @@ app.set('port', process.env.PORT || 3000)
 app.use(express.static('public'))
 const server = http.createServer(app)
 const io = new Server(server)
+const parser = new Parser()
 
 let posts = []
 let lastFetch
@@ -24,15 +26,26 @@ function toUTC(date) {
 }
 
 async function getPosts() {
-	const res = await axios.get('https://www.reddit.com/r/technews/new.json')
-	const json = res.data.data.children
-	posts = json.map(el => ({
+	let res = await axios.get('https://www.reddit.com/r/technews/new.json')
+	const reddit = res.data.data.children
+	posts = reddit.map(el => ({
 		title: el.data.title,
 		created: el.data.created,
-		url: el.data.url
+		url: el.data.url,
+		source: 'RDDT'
 	}))
+
+	const hn = await parser.parseURL('https://news.ycombinator.com/rss')
+
+	posts.concat(hn.items.map(el => ({
+		title: el.title,
+		url: el.link,
+		created: (new Date(el.isoDate)).getTime(),
+		source: 'HN'
+	})))
+
 	posts.sort((a, b) => b.created - a.created)
-	posts = posts.map(el => (encode(toUTC(el.created) + ' - ' + el.title) + ' / -...- / ').split('')).reverse()
+	posts = posts.map(el => (encode(el.source + ' ' + toUTC(el.created) + ' - ' + el.title) + ' / -...- / ').split(''))
 	posts.unshift(('-.-.- -...- / ').split(''))
 	if (!lastFetch) send()
 	lastFetch = Date.now()
