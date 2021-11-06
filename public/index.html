@@ -16,13 +16,28 @@
 		hr {
 			border-color: #00ff00;
 		}
+
+		#raw {
+			color: gray;
+		}
+
+		button {
+			background-color: #444;
+		}
+		button:hover {
+			background-color: #555;
+		}
 	</style>
 </head>
 <body>
+	<button id="toggle">Audio</button>
+	<button id="show">Show Raw</button>
 	<h1 id="top"></h1>
+	<p id="raw"></p>
 	<p id="out"></p>
 	<script src="/socket.io/socket.io.js"></script>
 	<script src="lib.js"></script>
+	<script src="sound.js"></script>
 	<script src="script.js"></script>
 </body>
 </html>

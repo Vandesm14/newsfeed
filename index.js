@@ -14,11 +14,13 @@ let posts = []
 let lastFetch
 
 function toUTC(date) {
-	// turn a date into hh:mm:ss utc 24hr format
-	const d = new Date(date)
+	const d = new Date(date*1000)
+	const day = d.getUTCDate()
+	const month = d.toLocaleString('en-us', { month: 'short' })
+	const year = d.getUTCFullYear()
 	const h = String(d.getUTCHours()).padStart(2, '0')
 	const m = String(d.getUTCMinutes()).padStart(2, '0')
-	return `${h}:${m} UTC`
+	return `${month} ${day} ${h}:${m}T`
 }
 
 async function getPosts() {
@@ -56,9 +58,8 @@ async function send() {
 				send()
 				return
 			}
-			const wpm = 40
+			const wpm = 30
 			const dits = (60 / (50 * wpm)) * 1000
-
 			const delay = getDelay(char)
 			io.emit('message', char)
 			await sleep(delay*dits) // hold tone
@@ -68,10 +69,8 @@ async function send() {
 }
 
 io.sockets.on('connection', function (socket) {})
-
 server.listen(app.get('port'), () => {
 	console.log('listening on port ' + app.get('port'))
-
 	setInterval(getPosts, 1000*60*15) // fetch every 15 minutes
 	getPosts()
 })
