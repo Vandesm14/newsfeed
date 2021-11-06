@@ -98,10 +98,10 @@ const _punctuation = {
 const _extra = {
   ' ': '/',
   '\n': '.-.-',
-	'&lt;AR&gt;': '.-.-.',
-	'&lt;AS&gt;': '.-...',
-	'&lt;CT&gt;': '-.-.-',
-	'&lt;BT&gt;': '-...-'
+	'<AR>': '.-.-.',
+	'<AS>': '.-...',
+	'<CT>': '-.-.-',
+	'<BT>': '-...-'
 }
 
 const _toMorse = {
