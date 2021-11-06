@@ -1,4 +1,4 @@
-const letters = {
+const _letters = {
   a: '.-',
   b: '-...',
   c: '-.-.',
@@ -27,7 +27,7 @@ const letters = {
   z: '--..',
 }
 
-const numbers = {
+const _numbers = {
   0: '-----',
   1: '.----',
   2: '..---',
@@ -40,7 +40,7 @@ const numbers = {
   9: '----.',
 }
 
-const nonEnglish = {
+const _nonEnglish = {
   á: '.--.-',
   à: '·−−·−', // shared by à, å
   ä: '·−·−', // shared by ä, æ, ą
@@ -74,11 +74,11 @@ const nonEnglish = {
   ż: '−−··−',
 }
 
-const punctuation = {
+const _punctuation = {
   '&': '.-...',
   "'": '.----.',
   '@': '.--.-.',
-  $: '···−··−',
+  '$': '···−··−',
   ')': '-.--.-',
   '(': '-.--.',
   ':': '---...',
@@ -88,36 +88,40 @@ const punctuation = {
   '!': '-.-.--',
   '.': '.-.-.-',
   '-': '-....-',
-  _: '··−−·−',
+  '_': '··−−·−',
   '+': '.-.-.',
   '"': '.-..-.',
   '?': '..--..',
   '/': '-..-.',
 }
 
-const extra = {
+const _extra = {
   ' ': '/',
   '\n': '.-.-',
+	'&lt;AR&gt;': '.-.-.',
+	'&lt;AS&gt;': '.-...',
+	'&lt;CT&gt;': '-.-.-',
+	'&lt;BT&gt;': '-...-'
 }
 
-const toMorse = {
-  ...letters,
-  ...numbers,
-  ...nonEnglish,
-  ...punctuation,
-  ...extra,
+const _toMorse = {
+  ..._letters,
+  ..._numbers,
+  ..._nonEnglish,
+  ..._punctuation,
+  ..._extra,
 }
 
-const fromMorse = Object.keys(toMorse).reduce(
-  (obj, char) => ({ ...obj, [toMorse[char]]: char }),
+const _fromMorse = Object.keys(_toMorse).reduce(
+  (obj, char) => ({ ...obj, [_toMorse[char]]: char }),
   {}
 )
 
 const encode = (str) =>
-  [...str.toLowerCase()].map((letter) => toMorse[letter]).join(' ')
+  [...str.toLowerCase()].map((letter) => _toMorse[letter]).join(' ')
 
 const decode = (str) =>
   str
     .split(' ')
-    .map((morse) => fromMorse[morse])
+    .map((morse) => _fromMorse[morse])
     .join('')
