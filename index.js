@@ -15,17 +15,20 @@ let posts = []
 let feed = []
 let lastFetch
 
-function toUTC(date) {
+function toUTC(date, full = false) {
 	const d = new Date(date*1000)
 	const day = String(d.getUTCDate()).padStart(2, '0')
 	const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+	const year = String(d.getUTCFullYear())
 	const h = String(d.getUTCHours()).padStart(2, '0')
 	const m = String(d.getUTCMinutes()).padStart(2, '0')
-	return `${month}-${day} ${h}:${m}T`
+	const s = String(d.getUTCSeconds()).padStart(2, '0')
+	if (!full) return `${month}-${day} ${h}:${m}Z`
+	else return `${h}:${m}:${s} ${year}-${month}-${day}`
 }
 
 function rssToDate(date) {
-	return ((new Date(date)).getTime() / 1000).toFixed(0)
+	return (new Date(date).getTime() / 1000).toFixed(0)
 }
 
 async function getPosts() {
@@ -73,8 +76,11 @@ async function getPosts() {
 	posts.sort((a, b) => b.created - a.created)
 	feed = [...posts]
 
+	const hoursSinceLastPost = ((new Date() - new Date(posts[0].created * 1000)) / 3600000).toFixed(0)
+
 	posts = posts.map(el => (encode(el.source + ' ' + toUTC(el.created) + ' - ' + el.title) + ' / -...- / ').split(''))
-	posts.unshift(('         / -.-.- -...- / ').split(''))
+	posts.unshift(...encode(`TOP OF FEED. TIME IS ${toUTC(new Date().getTime()/1000, true)} UTC. LAST UPDATE ${hoursSinceLastPost} HRS AGO.`).split(''), ...' / -...- / '.split(''))
+	posts.unshift(('-.-.--.- -.-.--.- -.-.--.- -.-.- -...- / ').split(''))
 	if (!lastFetch) send()
 	lastFetch = Date.now()
 	io.emit('links', feed)
