@@ -2,7 +2,6 @@ const { encode, decode } = require('morsee')
 const { Server } = require('socket.io')
 const Parser = require('rss-parser')
 const express = require('express')
-const axios = require('axios')
 const http = require('http')
 
 const app = express()
@@ -18,41 +17,64 @@ let lastFetch
 
 function toUTC(date) {
 	const d = new Date(date*1000)
-	const day = d.getUTCDate()
-	const month = d.toLocaleString('en-us', { month: 'short' })
-	const year = d.getUTCFullYear()
+	const day = String(d.getUTCDate()).padStart(2, '0')
+	const month = String(d.getUTCMonth() + 1).padStart(2, '0')
 	const h = String(d.getUTCHours()).padStart(2, '0')
 	const m = String(d.getUTCMinutes()).padStart(2, '0')
-	return `${month} ${day} ${h}:${m}T`
+	return `${month}-${day} ${h}:${m}T`
+}
+
+function rssToDate(date) {
+	return ((new Date(date)).getTime() / 1000).toFixed(0)
 }
 
 async function getPosts() {
-	let res = await axios.get('https://www.reddit.com/r/technews/new.json')
-	const reddit = res.data.data.children
-	posts = reddit.map(el => ({
-		title: el.data.title,
-		created: el.data.created,
-		url: el.data.url,
+	let reddit = await parser.parseURL('https://www.reddit.com/r/technews/new.rss')
+	reddit = reddit.items.map(el => ({
+		title: el.title,
+		url: el.content.match(/href="(.*?)"/g)[2].slice(6,-1) || '',
+		created: rssToDate(el.isoDate),
 		source: 'RDDT'
 	}))
 
-	const hn = await parser.parseURL('https://news.ycombinator.com/rss')
-	posts = posts.concat(hn.items.slice(15).map(el => ({
+	let hn = await parser.parseURL('https://news.ycombinator.com/rss')
+	hn = hn.items.map(el => ({
 		title: el.title,
 		url: el.link,
-		created: ((new Date(el.isoDate)).getTime() / 1000).toFixed(0),
-		source: 'HN'
-	})))
+		created: rssToDate(el.isoDate),
+		source: 'HKRN'
+	}))
+	.filter(el => el.title.split(' ').length > 3)
+
+	let cnet = await parser.parseURL('https://www.cnet.com/rss/news/')
+	cnet = cnet.items.filter(el => el.link.includes('tech'))
+	.map(el => ({
+		title: el.title,
+		url: el.link,
+		created: rssToDate(el.isoDate),
+		source: 'CNET'
+	}))
+
+	let verge = await parser.parseURL('https://www.theverge.com/tech/rss/index.xml')
+	verge = verge.items
+	.map(el => ({
+		title: el.title,
+		url: el.link,
+		created: rssToDate(el.isoDate),
+		source: 'TVRG'
+	}))
 
 	posts = [
-		...posts.filter(el => el.source === 'RDDT').slice(0, 20),
-		...posts.filter(el => el.source === 'HN').slice(0, 20)
+		...reddit.slice(0, 15),
+		...hn.slice(0, 15),
+		...cnet.slice(0, 15),
+		...verge.slice(0, 15)
 	]
 	posts.sort((a, b) => b.created - a.created)
 	feed = [...posts]
 
 	posts = posts.map(el => (encode(el.source + ' ' + toUTC(el.created) + ' - ' + el.title) + ' / -...- / ').split(''))
-	posts.unshift(('-.-.- -...- / ').split(''))
+	posts.unshift(('         / -.-.- -...- / ').split(''))
 	if (!lastFetch) send()
 	lastFetch = Date.now()
 	io.emit('links', feed)
@@ -69,7 +91,6 @@ const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milli
 
 async function send() {
 	const current = lastFetch
-	'         '.split('').map(el => io.emit('message', el)) // clear screen
 
 	for (const i in posts) {
 		const post = posts[i]
@@ -82,8 +103,7 @@ async function send() {
 			const dits = (60 / (50 * wpm)) * 1000
 			const delay = getDelay(char)
 			io.emit('message', char)
-			await sleep(delay*dits) // hold tone
-			await sleep(dits) // space between tones
+			await sleep(delay*dits + dits) // hold tone
 		}
 	}
 

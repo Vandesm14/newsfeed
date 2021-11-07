@@ -9,7 +9,9 @@ document.getElementById('toggle').addEventListener('click', () => audio = !audio
 document.getElementById('show').addEventListener('click', () => show = !show)
 document.getElementById('links').addEventListener('click', () => {
 	if (document.getElementById('posts').innerHTML === '') {
-		document.getElementById('posts').innerHTML = feed.map(el => `${el.source} ${new Date(el.created*1000).toLocaleString()} <a href="${el.url}">${el.title}</a>`).join('<BR>')
+		document.getElementById('posts').innerHTML = feed
+		.map(el => `${el.source} ${new Date(el.created*1000).toLocaleString()} <a href="${el.url}">${el.title}</a>`)
+		.join('<br>')
 	} else {
 		document.getElementById('posts').innerHTML = ''
 	}
@@ -28,9 +30,15 @@ socket.on('message', async (char) => {
 
 	stream += char
 	const slice = stream.split(' ').slice(-1)[0] || '&nbsp'
-	document.getElementById('top').innerHTML = decode(slice).toUpperCase() + ' ' + slice.replace(/\./g, '•')
+	document.getElementById('top').innerHTML = decode(slice)
+	.toUpperCase() + ' ' + slice.replace(/\./g, '•')
 
-	document.getElementById('raw').innerHTML = show ? stream.split('-...-').slice(-1)[0].replace(/\./g, '•') : '	'
+	document.getElementById('raw').innerHTML = show ?
+	stream
+	.split('-...-')
+	.slice(-1)[0]
+	.replace(/\./g, '•')
+	: '	'
 
 	let list = decode(stream)
 		.toUpperCase()
@@ -38,7 +46,10 @@ socket.on('message', async (char) => {
 		.replace(/>/g, '&gt;')
 		.split('&lt;BT&gt;')
 		.reverse()
-	document.getElementById('out').innerHTML = list.map(el => (el.indexOf('&lt;CT&gt;') !== -1 ? '<hr>' : '') + el + '<BT><hr>').join('')
+	document.getElementById('out').innerHTML = list
+	.map(el => (el
+		.indexOf('&lt;CT&gt;') !== -1 ? '<hr>' : '') + el + '<hr>')
+	.join('')
 
 	// Sound
 	const wpm = 30
