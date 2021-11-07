@@ -49,14 +49,14 @@ async function getPosts() {
 	}))
 	.filter(el => el.title.split(' ').length > 3)
 
-	let cnet = await parser.parseURL('https://www.cnet.com/rss/news/')
-	cnet = cnet.items.filter(el => el.link.includes('tech'))
-	.map(el => ({
-		title: el.title,
-		url: el.link,
-		created: rssToDate(el.isoDate),
-		source: 'CNET'
-	}))
+	// let cnet = await parser.parseURL('https://www.cnet.com/rss/news/')
+	// cnet = cnet.items.filter(el => el.link.includes('tech'))
+	// .map(el => ({
+	// 	title: el.title,
+	// 	url: el.link,
+	// 	created: rssToDate(el.isoDate),
+	// 	source: 'CNET'
+	// }))
 
 	let verge = await parser.parseURL('https://www.theverge.com/tech/rss/index.xml')
 	verge = verge.items
@@ -70,7 +70,7 @@ async function getPosts() {
 	posts = [
 		...reddit.slice(0, 15),
 		...hn.slice(0, 15),
-		...cnet.slice(0, 15),
+		// ...cnet.slice(0, 15),
 		...verge.slice(0, 15)
 	]
 	posts.sort((a, b) => b.created - a.created)
