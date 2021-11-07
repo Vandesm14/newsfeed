@@ -1,11 +1,19 @@
 const socket = io()
 let stream = ''
+let feed = []
 
 let audio = false
 let show = false
 
 document.getElementById('toggle').addEventListener('click', () => audio = !audio)
 document.getElementById('show').addEventListener('click', () => show = !show)
+document.getElementById('links').addEventListener('click', () => {
+	if (document.getElementById('posts').innerHTML === '') {
+		document.getElementById('posts').innerHTML = feed.map(el => `${el.source} ${new Date(el.created*1000).toLocaleString()} <a href="${el.url}">${el.title}</a>`).join('<BR>')
+	} else {
+		document.getElementById('posts').innerHTML = ''
+	}
+})
 
 function getDelay(char) {
 	if (char === '.') return 1 // dot
@@ -44,3 +52,5 @@ socket.on('message', async (char) => {
 		await sleep(dits)
 	}
 })
+
+socket.on('links', (data) => feed = data)

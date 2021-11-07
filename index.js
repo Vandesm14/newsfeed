@@ -13,6 +13,7 @@ const io = new Server(server)
 const parser = new Parser()
 
 let posts = []
+let feed = []
 let lastFetch
 
 function toUTC(date) {
@@ -36,19 +37,25 @@ async function getPosts() {
 	}))
 
 	const hn = await parser.parseURL('https://news.ycombinator.com/rss')
-
-	posts.concat(hn.items.map(el => ({
+	posts = posts.concat(hn.items.slice(15).map(el => ({
 		title: el.title,
 		url: el.link,
-		created: (new Date(el.isoDate)).getTime(),
+		created: ((new Date(el.isoDate)).getTime() / 1000).toFixed(0),
 		source: 'HN'
 	})))
 
+	posts = [
+		...posts.filter(el => el.source === 'RDDT').slice(0, 20),
+		...posts.filter(el => el.source === 'HN').slice(0, 20)
+	]
 	posts.sort((a, b) => b.created - a.created)
+	feed = [...posts]
+
 	posts = posts.map(el => (encode(el.source + ' ' + toUTC(el.created) + ' - ' + el.title) + ' / -...- / ').split(''))
 	posts.unshift(('-.-.- -...- / ').split(''))
 	if (!lastFetch) send()
 	lastFetch = Date.now()
+	io.emit('links', feed)
 }
 
 function getDelay(char) {
@@ -62,7 +69,7 @@ const sleep = (milliseconds) => new Promise(resolve => setTimeout(resolve, milli
 
 async function send() {
 	const current = lastFetch
-	'   '.split('').map(el => io.emit('message', el)) // clear screen
+	'         '.split('').map(el => io.emit('message', el)) // clear screen
 
 	for (const i in posts) {
 		const post = posts[i]
@@ -79,9 +86,14 @@ async function send() {
 			await sleep(dits) // space between tones
 		}
 	}
+
+	send()
+	return
 }
 
-io.sockets.on('connection', function (socket) {})
+io.sockets.on('connection', function (socket) {
+	socket.emit('links', feed)
+})
 server.listen(app.get('port'), () => {
 	console.log('listening on port ' + app.get('port'))
 	setInterval(getPosts, 1000*60*15) // fetch every 15 minutes
